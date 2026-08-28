@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{.Title}}</title>
+<style>
+  /*
+   * Nord theme for mdp
+   * Palette: https://www.nordtheme.com/docs/colors-and-palettes
+   */
+  :root {
+    /* Polar Night */
+    --nord0: #2e3440;
+    --nord1: #3b4252;
+    --nord2: #434c5e;
+    --nord3: #4c566a;
+    /* Snow Storm */
+    --nord4: #d8dee9;
+    --nord5: #e5e9f0;
+    --nord6: #eceff4;
+    /* Frost */
+    --nord7: #8fbcbb;
+    --nord8: #88c0d0;
+    --nord9: #81a1c1;
+    --nord10: #5e81ac;
+    /* Aurora */
+    --nord11: #bf616a;
+    --nord12: #d08770;
+    --nord13: #ebcb8b;
+    --nord14: #a3be8c;
+    --nord15: #b48ead;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    background-color: var(--nord0);
+  }
+
+  body {
+    margin: 0 auto;
+    padding: 3rem 1.5rem 6rem;
+    max-width: 780px;
+    background-color: var(--nord0);
+    color: var(--nord4);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN",
+      "Hiragino Sans", Meiryo, sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: var(--nord10);
+    color: var(--nord6);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--nord6);
+    font-weight: 600;
+    line-height: 1.35;
+    margin-top: 2.2em;
+    margin-bottom: 0.8em;
+  }
+
+  h1 {
+    font-size: 2.1em;
+    border-bottom: 1px solid var(--nord2);
+    padding-bottom: 0.4em;
+    margin-top: 0;
+  }
+
+  h2 {
+    font-size: 1.6em;
+    border-bottom: 1px solid var(--nord2);
+    padding-bottom: 0.3em;
+  }
+
+  h3 {
+    font-size: 1.3em;
+    color: var(--nord8);
+  }
+
+  h4 {
+    font-size: 1.1em;
+    color: var(--nord8);
+  }
+
+  h5, h6 {
+    font-size: 1em;
+    color: var(--nord9);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  p, ul, ol, blockquote, table, pre, details {
+    margin-top: 0;
+    margin-bottom: 1.1em;
+  }
+
+  a {
+    color: var(--nord8);
+    text-decoration: none;
+    border-bottom: 1px solid var(--nord3);
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  a:hover {
+    color: var(--nord7);
+    border-bottom-color: var(--nord7);
+  }
+
+  strong {
+    color: var(--nord6);
+    font-weight: 600;
+  }
+
+  em {
+    color: var(--nord5);
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--nord2);
+    margin: 2.5em 0;
+  }
+
+  ul, ol {
+    padding-left: 1.6em;
+  }
+
+  li {
+    margin-bottom: 0.35em;
+  }
+
+  li::marker {
+    color: var(--nord9);
+  }
+
+  /* GFM task lists (goldmark emits a bare <input type="checkbox"> as the
+     first child of the <li>, with no wrapper class) */
+  li:has(> input[type="checkbox"]:first-child) {
+    list-style: none;
+    margin-left: -1.6em;
+  }
+
+  li input[type="checkbox"] {
+    accent-color: var(--nord14);
+    margin-right: 0.5em;
+  }
+
+  blockquote {
+    margin-left: 0;
+    padding: 0.2em 1em;
+    border-left: 3px solid var(--nord10);
+    background-color: var(--nord1);
+    color: var(--nord4);
+    border-radius: 0 4px 4px 0;
+  }
+
+  blockquote p:last-child {
+    margin-bottom: 0.2em;
+  }
+
+  code {
+    font-family: "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.88em;
+    background-color: var(--nord1);
+    color: var(--nord13);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+  }
+
+  pre {
+    background-color: var(--nord1);
+    border: 1px solid var(--nord2);
+    border-radius: 6px;
+    padding: 1em 1.2em;
+    overflow-x: auto;
+  }
+
+  pre code {
+    background-color: transparent;
+    color: var(--nord5);
+    padding: 0;
+    font-size: 0.85em;
+    line-height: 1.6;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    display: block;
+    overflow-x: auto;
+  }
+
+  th, td {
+    padding: 0.55em 0.9em;
+    border: 1px solid var(--nord2);
+    text-align: left;
+  }
+
+  th {
+    background-color: var(--nord1);
+    color: var(--nord6);
+    font-weight: 600;
+  }
+
+  tr:nth-child(even) td {
+    background-color: rgba(59, 66, 82, 0.4); /* nord1 @ 40% */
+  }
+
+  img {
+    max-width: 100%;
+    border-radius: 6px;
+  }
+
+  del {
+    color: var(--nord3);
+  }
+
+  kbd {
+    background-color: var(--nord2);
+    color: var(--nord6);
+    border: 1px solid var(--nord3);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 0.1em 0.5em;
+    font-family: inherit;
+    font-size: 0.85em;
+  }
+
+  /* Footnotes (goldmark + extension.Footnote) */
+  .footnotes {
+    margin-top: 3em;
+    padding-top: 1em;
+    border-top: 1px solid var(--nord2);
+    font-size: 0.9em;
+    color: var(--nord3);
+  }
+
+  .footnotes a {
+    color: var(--nord9);
+  }
+
+  /* Scrollbar (WebKit) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: var(--nord0);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--nord2);
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--nord3);
+  }
+</style>
+</head>
+<body>
+{{.Content}}
+</body>
+</html>
