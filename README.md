@@ -6,6 +6,10 @@ color scheme for a clean, dark, low-contrast Markdown preview.
 
 ## Preview
 
+![Screenshot of mdp rendering examples/demo.md with the Nord theme](./screenshot.png)
+
+*Rendered from [`examples/demo.md`](./examples/demo.md).*
+
 The theme renders Markdown with:
 
 - A dark **Polar Night** background (`#2e3440`) with **Snow Storm** body text (`#d8dee9`)
