@@ -11,6 +11,7 @@ based on [Nord](https://www.nordtheme.com/).
 
 - Clean, **dark**, low-contrast reading experience
 - Styling for GFM tables, task lists, footnotes, and code blocks
+- Mermaid diagrams rendered in the Nord palette
 - Responsive layout for desktop and mobile
 
 ## Task list
@@ -34,6 +35,27 @@ based on [Nord](https://www.nordtheme.com/).
 func main() {
     fmt.Println("hello, nord")
 }
+```
+
+## Diagrams
+
+```mermaid
+flowchart LR
+    md["README.md"] --> mdp["mdp --watch"]
+    mdp --> html["index.html"]
+    html --> browser["Browser"]
+    browser -. reload .-> mdp
+```
+
+```mermaid
+sequenceDiagram
+    participant You
+    participant mdp
+    participant Browser
+    You->>mdp: save demo.md
+    mdp->>mdp: render with nord.html
+    mdp-->>Browser: open preview
+    Note over Browser: Nord, all the way down
 ```
 
 > "Nord" is inspired by the arctic, the beauty of the aurora and the

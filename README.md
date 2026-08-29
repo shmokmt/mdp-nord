@@ -16,6 +16,8 @@ The theme renders Markdown with:
 - **Frost** blues for headings, links, and blockquote accents
 - **Aurora** accents for inline code (yellow), checked task-list checkboxes (green), and strikethrough text
 - Styling for GFM tables, task lists, footnotes, `<kbd>`, blockquotes, code blocks, and horizontal rules
+- [Mermaid](https://mermaid.js.org/) diagrams, rendered in the Nord palette (see below)
+- A lightbox: click an image or a diagram to open it enlarged (see below)
 - A responsive layout (max width `780px`) that works well on both desktop and mobile
 
 ## Installation
@@ -82,6 +84,69 @@ Your resulting directory layout should look like this:
 └── themes/
     └── nord.html
 ```
+
+## Mermaid diagrams
+
+Fenced blocks tagged `mermaid` are rendered as diagrams, themed with the Nord
+palette:
+
+![Flowchart and sequence diagram rendered with the Nord theme](./mermaid.png)
+
+````markdown
+```mermaid
+flowchart LR
+    md["README.md"] --> mdp["mdp --watch"] --> html["index.html"]
+```
+````
+
+Notes on how it works:
+
+- The theme loads mermaid from [jsDelivr](https://www.jsdelivr.com/package/npm/mermaid)
+  (pinned to a specific version), and only on pages that actually contain a
+  `mermaid` block — documents without diagrams make no network request.
+- If mermaid can't be loaded, or a diagram doesn't parse, the block stays a
+  normal code block so the source is still readable. An unparsable diagram gets
+  a red border, with the error in the block's `title` (and in the browser
+  console).
+- Flowchart, sequence, class, state, ER, gantt, and pie diagrams all pick up
+  Nord colors; anything else falls back to mermaid's own defaults for colors the
+  theme doesn't set.
+
+### Rendering offline
+
+To render diagrams without hitting the CDN, download `mermaid.min.js` next to
+the theme and point `MERMAID_SRC` (near the bottom of `nord.html`) at your copy:
+
+```bash
+curl -o ~/.config/mdp/themes/mermaid.min.js \
+  https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js
+```
+
+```js
+var MERMAID_SRC = "file:///home/you/.config/mdp/themes/mermaid.min.js";
+```
+
+Browsers differ in how willing they are to load a `file://` script from a page
+in another directory; if yours refuses, serve `mermaid.min.js` over `http://`
+instead. Either way a script that fails to load leaves the diagrams as plain
+code blocks.
+
+Bumping the pinned version in `MERMAID_SRC` is also how you upgrade mermaid.
+
+## Enlarging images and diagrams
+
+Clicking an image or a rendered mermaid diagram opens it in a modal over a
+dimmed Polar Night backdrop. Close it with `Esc`, the button in the corner, or a
+click outside the content.
+
+- Diagrams are vector, so they scale up to fill the viewport — capped at twice
+  the size mermaid laid them out at, so a three-node flowchart doesn't fill the
+  screen. Images are shown as large as they fit, never upscaled past their
+  natural size, with their alt text as a caption.
+- Linked images (badges and the like) are left alone: clicking one follows its
+  link, as it should.
+- Both are keyboard reachable — `Tab` to an image or diagram, then `Enter` or
+  `Space`. Focus returns to it when the modal closes.
 
 ## Using it for a single file only
 
