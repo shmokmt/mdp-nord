@@ -190,6 +190,33 @@
     line-height: 1.6;
   }
 
+  /* Mermaid diagrams: ```mermaid fences, swapped for SVG by the script at the
+     end of <body>. A fence that fails to load or parse stays a code block. */
+  .mermaid {
+    margin: 0 0 1.1em;
+    padding: 1em 1.2em;
+    background-color: var(--nord1);
+    border: 1px solid var(--nord2);
+    border-radius: 6px;
+    overflow-x: auto;
+    text-align: center;
+  }
+
+  .mermaid svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  pre.mermaid-error {
+    border-color: var(--nord11);
+  }
+
+  /* d3 puts stroke="currentColor" on gantt grid lines, which outranks the
+     themed rule mermaid injects for them */
+  .mermaid .grid .tick line {
+    stroke: var(--nord3);
+  }
+
   table {
     width: 100%;
     border-collapse: collapse;
@@ -268,5 +295,151 @@
 </head>
 <body>
 {{.Content}}
+<script>
+  /*
+   * Mermaid support for mdp.
+   *
+   * mdp renders a ```mermaid fence as <pre><code class="language-mermaid">.
+   * The code below loads mermaid — only when the document actually contains
+   * such a fence — and replaces each block with the rendered SVG, themed with
+   * the Nord palette. Anything that fails (no network, an unparsable diagram)
+   * is left as a plain code block, so the source stays readable.
+   *
+   * For offline rendering, download mermaid.min.js and point MERMAID_SRC at
+   * the local copy, e.g. "file:///Users/you/.config/mdp/themes/mermaid.min.js".
+   */
+  (function () {
+    var MERMAID_SRC = "https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js";
+
+    var blocks = Array.prototype.slice.call(
+      document.querySelectorAll("pre > code.language-mermaid")
+    );
+    if (blocks.length === 0) {
+      return;
+    }
+
+    var script = document.createElement("script");
+    script.src = MERMAID_SRC;
+    script.onload = renderAll;
+    script.onerror = function () {
+      console.error("mdp-nord: could not load mermaid from " + MERMAID_SRC);
+    };
+    document.head.appendChild(script);
+
+    function renderAll() {
+      window.mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "strict",
+        suppressErrorRendering: true,
+        theme: "base",
+        fontFamily: window.getComputedStyle(document.body).fontFamily,
+        themeVariables: {
+          darkMode: true,
+          background: "#3b4252", /* nord1, matching the .mermaid panel */
+          fontSize: "15px",
+          /* Nodes */
+          primaryColor: "#434c5e", /* nord2 */
+          primaryTextColor: "#eceff4", /* nord6 */
+          primaryBorderColor: "#81a1c1", /* nord9 */
+          secondaryColor: "#4c566a", /* nord3 */
+          secondaryTextColor: "#eceff4",
+          secondaryBorderColor: "#8fbcbb", /* nord7 */
+          tertiaryColor: "#2e3440", /* nord0 */
+          tertiaryTextColor: "#d8dee9", /* nord4 */
+          tertiaryBorderColor: "#4c566a",
+          mainBkg: "#434c5e",
+          nodeBorder: "#81a1c1",
+          nodeTextColor: "#eceff4",
+          /* Edges and labels */
+          lineColor: "#88c0d0", /* nord8 */
+          textColor: "#d8dee9",
+          titleColor: "#eceff4",
+          edgeLabelBackground: "#3b4252",
+          /* Subgraphs */
+          clusterBkg: "#2e3440",
+          clusterBorder: "#4c566a",
+          /* Notes */
+          noteBkgColor: "#4c566a",
+          noteTextColor: "#eceff4",
+          noteBorderColor: "#ebcb8b", /* nord13 */
+          /* Sequence diagrams */
+          actorBkg: "#434c5e",
+          actorBorder: "#81a1c1",
+          actorTextColor: "#eceff4",
+          actorLineColor: "#4c566a",
+          signalColor: "#d8dee9",
+          signalTextColor: "#d8dee9",
+          labelBoxBkgColor: "#434c5e",
+          labelBoxBorderColor: "#81a1c1",
+          labelTextColor: "#eceff4",
+          loopTextColor: "#d8dee9",
+          activationBkgColor: "#4c566a",
+          activationBorderColor: "#88c0d0",
+          altBackground: "#2e3440",
+          /* Gantt and timelines */
+          sectionBkgColor: "#3b4252",
+          altSectionBkgColor: "#2e3440",
+          sectionBkgColor2: "#434c5e",
+          taskBkgColor: "#5e81ac", /* nord10 */
+          taskTextColor: "#eceff4",
+          taskTextOutsideColor: "#d8dee9",
+          taskBorderColor: "#81a1c1",
+          gridColor: "#4c566a",
+          todayLineColor: "#bf616a", /* nord11 */
+          doneTaskBkgColor: "#4c566a",
+          doneTaskBorderColor: "#a3be8c", /* nord14 */
+          critBkgColor: "#bf616a",
+          critBorderColor: "#bf616a",
+          /* Pie and other categorical fills: Frost, then Aurora */
+          pie1: "#88c0d0",
+          pie2: "#81a1c1",
+          pie3: "#8fbcbb",
+          pie4: "#5e81ac",
+          pie5: "#a3be8c",
+          pie6: "#ebcb8b",
+          pie7: "#d08770",
+          pie8: "#b48ead",
+          pie9: "#bf616a",
+          pie10: "#4c566a",
+          pie11: "#434c5e",
+          pie12: "#3b4252",
+          pieTitleTextColor: "#eceff4",
+          pieSectionTextColor: "#2e3440",
+          pieLegendTextColor: "#d8dee9",
+          pieStrokeColor: "#3b4252",
+          pieOuterStrokeColor: "#4c566a"
+        }
+      });
+
+      /* Render one at a time: mermaid uses a shared scratch element in the
+         document while measuring a diagram. */
+      blocks.reduce(function (chain, code, index) {
+        return chain.then(function () {
+          return renderBlock(code, index);
+        });
+      }, Promise.resolve());
+    }
+
+    function renderBlock(code, index) {
+      var pre = code.parentNode;
+      return window.mermaid
+        .render("mdp-nord-mermaid-" + index, code.textContent)
+        .then(function (result) {
+          var figure = document.createElement("div");
+          figure.className = "mermaid";
+          figure.innerHTML = result.svg;
+          if (typeof result.bindFunctions === "function") {
+            result.bindFunctions(figure);
+          }
+          pre.parentNode.replaceChild(figure, pre);
+        })
+        .catch(function (err) {
+          pre.className = pre.className ? pre.className + " mermaid-error" : "mermaid-error";
+          pre.title = "Mermaid render error: " + ((err && err.message) || err);
+          console.error("mdp-nord: could not render mermaid diagram", err);
+        });
+    }
+  })();
+</script>
 </body>
 </html>
