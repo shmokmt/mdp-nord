@@ -17,6 +17,7 @@ The theme renders Markdown with:
 - **Aurora** accents for inline code (yellow), checked task-list checkboxes (green), and strikethrough text
 - Styling for GFM tables, task lists, footnotes, `<kbd>`, blockquotes, code blocks, and horizontal rules
 - [Mermaid](https://mermaid.js.org/) diagrams, rendered in the Nord palette (see below)
+- A lightbox: click an image or a diagram to open it enlarged (see below)
 - A responsive layout (max width `780px`) that works well on both desktop and mobile
 
 ## Installation
@@ -131,6 +132,21 @@ instead. Either way a script that fails to load leaves the diagrams as plain
 code blocks.
 
 Bumping the pinned version in `MERMAID_SRC` is also how you upgrade mermaid.
+
+## Enlarging images and diagrams
+
+Clicking an image or a rendered mermaid diagram opens it in a modal over a
+dimmed Polar Night backdrop. Close it with `Esc`, the button in the corner, or a
+click outside the content.
+
+- Diagrams are vector, so they scale up to fill the viewport — capped at twice
+  the size mermaid laid them out at, so a three-node flowchart doesn't fill the
+  screen. Images are shown as large as they fit, never upscaled past their
+  natural size, with their alt text as a caption.
+- Linked images (badges and the like) are left alone: clicking one follows its
+  link, as it should.
+- Both are keyboard reachable — `Tab` to an image or diagram, then `Enter` or
+  `Space`. Focus returns to it when the modal closes.
 
 ## Using it for a single file only
 

@@ -217,6 +217,115 @@
     stroke: var(--nord3);
   }
 
+  /* Lightbox: images and rendered diagrams open enlarged in a modal */
+  .zoomable {
+    cursor: zoom-in;
+  }
+
+  .zoomable:focus-visible {
+    outline: 2px solid var(--nord8);
+    outline-offset: 3px;
+  }
+
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3.5rem 1.5rem;
+    background-color: rgba(46, 52, 64, 0.96); /* nord0 @ 96% */
+    cursor: zoom-out;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .lightbox {
+      animation: lightbox-in 0.15s ease-out;
+    }
+  }
+
+  @keyframes lightbox-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .lightbox-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9em;
+    width: 100%;
+    height: 100%;
+    cursor: default;
+  }
+
+  .lightbox-content img {
+    flex: 0 1 auto;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    border-radius: 6px;
+  }
+
+  /* Diagrams are vector, so they scale up — bounded by the viewport and by
+     the cap the script sets, so a three-node flowchart doesn't fill a wall */
+  .lightbox-figure {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 1.2em;
+    background-color: var(--nord1);
+    border-radius: 6px;
+  }
+
+  .lightbox-figure svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .lightbox-caption {
+    flex: 0 0 auto;
+    max-width: 70ch;
+    color: var(--nord4);
+    font-size: 0.9em;
+    text-align: center;
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: 1rem;
+    right: 1.25rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    padding: 0;
+    background-color: var(--nord1);
+    color: var(--nord5);
+    border: 1px solid var(--nord3);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .lightbox-close:hover {
+    background-color: var(--nord2);
+    color: var(--nord6);
+  }
+
+  .lightbox-close:focus-visible {
+    outline: 2px solid var(--nord8);
+    outline-offset: 2px;
+  }
+
   table {
     width: 100%;
     border-collapse: collapse;
@@ -297,7 +406,8 @@
 {{.Content}}
 <script>
   /*
-   * Mermaid support for mdp.
+   * Nord theme behavior: mermaid rendering, plus a lightbox for images and
+   * rendered diagrams.
    *
    * mdp renders a ```mermaid fence as <pre><code class="language-mermaid">.
    * The code below loads mermaid — only when the document actually contains
@@ -311,22 +421,170 @@
   (function () {
     var MERMAID_SRC = "https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js";
 
-    var blocks = Array.prototype.slice.call(
-      document.querySelectorAll("pre > code.language-mermaid")
-    );
-    if (blocks.length === 0) {
-      return;
+    setUpLightbox();
+    renderMermaidDiagrams();
+
+    /* ----- Lightbox --------------------------------------------------- */
+
+    /* Images and diagrams open enlarged in a modal, closed with Escape, the
+       close button, or a click outside the content. */
+    function setUpLightbox() {
+      var images = document.querySelectorAll("img");
+      for (var i = 0; i < images.length; i++) {
+        /* A linked image belongs to its link, not to the lightbox. */
+        if (!images[i].closest("a")) {
+          makeZoomable(images[i], "Enlarge image" + (images[i].alt ? ": " + images[i].alt : ""));
+        }
+      }
+
+      document.addEventListener("click", function (event) {
+        /* Links win: a linked image, or a diagram node with a click target. */
+        if (event.target.closest("a") || event.target.closest(".lightbox")) {
+          return;
+        }
+        var target = event.target.closest(".zoomable");
+        if (target) {
+          openLightbox(target);
+        }
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter" && event.key !== " ") {
+          return;
+        }
+        var active = document.activeElement;
+        var target = active && active.closest ? active.closest(".zoomable") : null;
+        if (target) {
+          event.preventDefault();
+          openLightbox(target);
+        }
+      });
     }
 
-    var script = document.createElement("script");
-    script.src = MERMAID_SRC;
-    script.onload = renderAll;
-    script.onerror = function () {
-      console.error("mdp-nord: could not load mermaid from " + MERMAID_SRC);
-    };
-    document.head.appendChild(script);
+    function makeZoomable(element, label) {
+      element.classList.add("zoomable");
+      element.setAttribute("tabindex", "0");
+      element.setAttribute("role", "button");
+      element.setAttribute("aria-label", label);
+    }
 
-    function renderAll() {
+    function openLightbox(source) {
+      var content = document.createElement("div");
+      content.className = "lightbox-content";
+
+      var caption = "";
+      if (source.tagName === "IMG") {
+        var image = source.cloneNode(false);
+        stripZoomable(image);
+        content.appendChild(image);
+        caption = source.alt || source.title || "";
+      } else {
+        var diagram = source.querySelector("svg");
+        if (!diagram) {
+          return;
+        }
+        var size = diagram.viewBox && diagram.viewBox.baseVal;
+        diagram = diagram.cloneNode(true);
+        /* mermaid caps the diagram width inline; in the modal it grows to the
+           viewport, up to twice the size it was laid out at. */
+        diagram.style.maxWidth = "none";
+        diagram.setAttribute("width", "100%");
+        diagram.setAttribute("height", "100%");
+        diagram.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+        var figure = document.createElement("div");
+        figure.className = "lightbox-figure";
+        if (size && size.width && size.height) {
+          figure.style.maxWidth = Math.round(size.width * 2) + "px";
+          figure.style.maxHeight = Math.round(size.height * 2) + "px";
+        }
+        figure.appendChild(diagram);
+        content.appendChild(figure);
+      }
+
+      if (caption) {
+        var captionElement = document.createElement("p");
+        captionElement.className = "lightbox-caption";
+        captionElement.textContent = caption;
+        content.appendChild(captionElement);
+      }
+
+      var closeButton = document.createElement("button");
+      closeButton.type = "button";
+      closeButton.className = "lightbox-close";
+      closeButton.setAttribute("aria-label", "Close");
+      closeButton.textContent = "×";
+
+      var overlay = document.createElement("div");
+      overlay.className = "lightbox";
+      overlay.setAttribute("role", "dialog");
+      overlay.setAttribute("aria-modal", "true");
+      overlay.setAttribute("aria-label", caption || "Enlarged view");
+      overlay.appendChild(closeButton);
+      overlay.appendChild(content);
+
+      var previousFocus = document.activeElement;
+      var previousOverflow = document.documentElement.style.overflow;
+      document.documentElement.style.overflow = "hidden";
+      document.body.appendChild(overlay);
+      closeButton.focus();
+
+      overlay.addEventListener("click", function (event) {
+        if (event.target === overlay || event.target === content || event.target === closeButton) {
+          close();
+        }
+      });
+      document.addEventListener("keydown", onKeydown);
+
+      function onKeydown(event) {
+        if (event.key === "Escape") {
+          close();
+        } else if (event.key === "Tab") {
+          /* The close button is the only stop while the modal is open. */
+          event.preventDefault();
+          closeButton.focus();
+        }
+      }
+
+      function close() {
+        document.removeEventListener("keydown", onKeydown);
+        document.documentElement.style.overflow = previousOverflow;
+        overlay.remove();
+        if (previousFocus && previousFocus.focus) {
+          previousFocus.focus();
+        }
+      }
+    }
+
+    function stripZoomable(element) {
+      element.classList.remove("zoomable");
+      element.removeAttribute("tabindex");
+      element.removeAttribute("role");
+      element.removeAttribute("aria-label");
+    }
+
+    /* ----- Mermaid ------------------------------------------------------ */
+
+    function renderMermaidDiagrams() {
+      var blocks = Array.prototype.slice.call(
+        document.querySelectorAll("pre > code.language-mermaid")
+      );
+      if (blocks.length === 0) {
+        return;
+      }
+
+      var script = document.createElement("script");
+      script.src = MERMAID_SRC;
+      script.onload = function () {
+        renderAll(blocks);
+      };
+      script.onerror = function () {
+        console.error("mdp-nord: could not load mermaid from " + MERMAID_SRC);
+      };
+      document.head.appendChild(script);
+    }
+
+    function renderAll(blocks) {
       window.mermaid.initialize({
         startOnLoad: false,
         securityLevel: "strict",
@@ -432,6 +690,7 @@
             result.bindFunctions(figure);
           }
           pre.parentNode.replaceChild(figure, pre);
+          makeZoomable(figure, "Enlarge diagram");
         })
         .catch(function (err) {
           pre.className = pre.className ? pre.className + " mermaid-error" : "mermaid-error";
